@@ -32,6 +32,8 @@ public:
     void setSurroundLevel(float level);
     void setCenterLevel(float level);
     void setLfeLevel(float level);
+    void setInputGain(float linearGain);
+    void setVoiceNormalization(bool enabled) { voiceNormalization = enabled; normalizerEnvelope = 0.0f; }
 
     float surroundLevel() const { return surroundGain; }
     float centerLevel() const { return centerGain; }
@@ -83,6 +85,9 @@ private:
     float surroundGain = 0.75f;
     float centerGain = 1.0f;
     float lfeGain = 0.8f;
+    float inputGain = 1.0f;
+    float normalizerEnvelope = 0.0f;
+    bool voiceNormalization = false;
 
     Biquad lfeLow1;
     Biquad lfeLow2;
