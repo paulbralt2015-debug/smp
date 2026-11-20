@@ -190,8 +190,8 @@ void SurroundProcessor::process(
         }
 
         if (currentMode == Stereo) {
-            output[i * 2] = left;
-            output[i * 2 + 1] = right;
+            output[i * 2] = softLimit(left);
+            output[i * 2 + 1] = softLimit(right);
             continue;
         }
 
