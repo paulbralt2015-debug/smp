@@ -96,6 +96,8 @@ void SurroundProcessor::setSampleRate(int rate)
 
     delayA.resize(samples(0.050f) + 2);
     delayB.resize(samples(0.050f) + 2);
+    delayC.resize(samples(0.050f) + 2);
+    delayD.resize(samples(0.050f) + 2);
 
     reset();
 }
@@ -151,6 +153,8 @@ void SurroundProcessor::reset()
     surroundLow.clear();
     delayA.clear();
     delayB.clear();
+    delayC.clear();
+    delayD.clear();
     surroundAllPassA.clear();
     surroundAllPassB.clear();
     midEnvelope = sideEnvelope = 0.0f;
@@ -247,8 +251,8 @@ void SurroundProcessor::process(
             const float decorrelatedB = surroundAllPassB.process(surroundSignal);
             const float sideLeft = delayA.process(decorrelatedA, sideDelay);
             const float sideRight = delayB.process(decorrelatedB, sideDelay + 96);
-            const float backLeft = delayA.process(decorrelatedB, backDelay);
-            const float backRight = delayB.process(decorrelatedA, backDelay + 96);
+            const float backLeft = delayC.process(decorrelatedB, backDelay);
+            const float backRight = delayD.process(decorrelatedA, backDelay + 96);
 
             out[4] = softLimit(backLeft * 0.45f);
             out[5] = softLimit(backRight * 0.45f);
