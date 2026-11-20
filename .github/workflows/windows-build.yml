@@ -12,6 +12,7 @@ permissions:
 
 env:
   QT_VERSION: 6.8.3
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
 jobs:
   windows:
@@ -27,8 +28,15 @@ jobs:
           modules: qtmultimedia
           cache: true
 
+      - name: Installer vcpkg et FFmpeg
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$env:VCPKG_ROOT"
+          & "$env:VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
+          & "$env:VCPKG_ROOT/vcpkg.exe" install "ffmpeg[avcodec,avformat,swresample]:x64-windows"
+
       - name: Configurer
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Compiler
         run: cmake --build build --config Release --parallel
@@ -36,12 +44,13 @@ jobs:
       - name: Tests
         run: ctest --test-dir build -C Release --output-on-failure
 
-      - name: Déployer les DLL Qt
+      - name: Déployer Qt et FFmpeg
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force package | Out-Null
           Copy-Item build/Release/CinemaSurroundPlayer.exe package/
           windeployqt --release --no-translations package/CinemaSurroundPlayer.exe
+          Get-ChildItem "$env:VCPKG_ROOT/installed/x64-windows/bin/*.dll" | Copy-Item -Destination package/
           Compress-Archive -Path package/* -DestinationPath CinemaSurroundPlayer-Windows-x64.zip
 
       - uses: actions/upload-artifact@v4
@@ -59,24 +68,19 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Dépendances système
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-dev libegl1-mesa-dev libpulse-dev libxcb-cursor0
-
+          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-dev libegl1-mesa-dev libpulse-dev libxcb-cursor0 libavformat-dev libavcodec-dev libavutil-dev libswresample-dev
       - name: Installer Qt
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
           modules: qtmultimedia
           cache: true
-
       - name: Configurer
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
       - name: Compiler
         run: cmake --build build --parallel
-
       - name: Tests
         run: ctest --test-dir build --output-on-failure
