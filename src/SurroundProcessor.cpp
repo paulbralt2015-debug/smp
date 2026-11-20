@@ -237,14 +237,20 @@ void SurroundProcessor::process(
         out[3] = softLimit(lfe);
 
         if (currentMode == Surround51) {
-            // Deux réseaux all-pass créent une différence de phase douce
-            // entre les enceintes arrière sans dupliquer un canal inversé.
-            const float rearLeft = delayA.process(
-                surroundAllPassA.process(surroundSignal), rearDelay);
-            const float rearRight = delayB.process(
-                surroundAllPassB.process(surroundSignal), rearDelay + sideDelay / 3);
-            out[4] = softLimit(rearLeft);
-            out[5] = softLimit(rearRight);
+            if (matrixMode == DolbySurround || matrixMode == ProLogic) {
+                // Pro Logic classique : canal arrière mono partagé.
+                const float rearMono = delayA.process(surroundSignal, rearDelay);
+                out[4] = softLimit(rearMono);
+                out[5] = softLimit(rearMono);
+            } else {
+                // Pro Logic II : deux voies arrière décorrélées.
+                const float rearLeft = delayA.process(
+                    surroundAllPassA.process(surroundSignal), rearDelay);
+                const float rearRight = delayB.process(
+                    surroundAllPassB.process(surroundSignal), rearDelay + sideDelay / 3);
+                out[4] = softLimit(rearLeft);
+                out[5] = softLimit(rearRight);
+            }
         }
         else {
             const float decorrelatedA = surroundAllPassA.process(surroundSignal);
