@@ -89,7 +89,7 @@ private:
     float dimension = 0.0f;
     float surroundDelayMs = 10.0f;
     bool panorama = false;
-    bool subwoofer = true;
+    bool subwoofer = false;
 
     Biquad lfeLow1, lfeLow2, surroundLow;
     DelayLine delayA, delayB, delayC, delayD;
