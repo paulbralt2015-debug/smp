@@ -68,6 +68,21 @@ private:
         void clear() { z1 = z2 = 0.0f; }
     };
 
+    struct AllPass {
+        float coefficient = 0.65f;
+        float previousInput = 0.0f;
+        float previousOutput = 0.0f;
+        float process(float input)
+        {
+            const float output = -coefficient * input + previousInput
+                               + coefficient * previousOutput;
+            previousInput = input;
+            previousOutput = output;
+            return output;
+        }
+        void clear() { previousInput = previousOutput = 0.0f; }
+    };
+
     struct DelayLine {
         std::vector<float> buffer;
         std::size_t pos = 0;
@@ -95,6 +110,10 @@ private:
 
     DelayLine delayA;
     DelayLine delayB;
+    AllPass surroundAllPassA;
+    AllPass surroundAllPassB;
+    float midEnvelope = 0.0f;
+    float sideEnvelope = 0.0f;
 
     std::size_t sideDelay = 0;
     std::size_t rearDelay = 0;
