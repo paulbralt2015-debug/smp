@@ -110,6 +110,8 @@ private:
 
     DelayLine delayA;
     DelayLine delayB;
+    DelayLine delayC;
+    DelayLine delayD;
     AllPass surroundAllPassA;
     AllPass surroundAllPassB;
     float midEnvelope = 0.0f;
