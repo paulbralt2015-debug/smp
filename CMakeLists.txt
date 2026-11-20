@@ -69,6 +69,8 @@ if(BUILD_PLAYER)
         src/ClickSlider.h
         src/MainWindow.h
         src/MainWindow.cpp
+        src/VideoDisplayWidget.h
+        src/VideoDisplayWidget.cpp
         src/SurroundOutput.h
         src/SurroundOutput.cpp
     )
