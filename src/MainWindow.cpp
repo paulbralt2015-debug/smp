@@ -98,6 +98,21 @@ MainWindow::MainWindow(QWidget *parent)
     modeBox->addItem("Upmix 5.1");
     modeBox->addItem("Upmix 7.1");
 
+    matrixBox = new QComboBox();
+    matrixBox->addItem("Dolby Surround (matriciel)", int(SurroundProcessor::DolbySurround));
+    matrixBox->addItem("Pro Logic I (matriciel)", int(SurroundProcessor::ProLogic));
+    matrixBox->addItem("Pro Logic II (matriciel)", int(SurroundProcessor::ProLogicII));
+    matrixBox->addItem("Pro Logic IIx (matriciel)", int(SurroundProcessor::ProLogicIIx));
+    matrixBox->setCurrentIndex(2);
+
+    profileBox = new QComboBox();
+    profileBox->addItem("Standard", int(SurroundProcessor::Standard));
+    profileBox->addItem("Nuit", int(SurroundProcessor::Night));
+    profileBox->addItem("Jeu", int(SurroundProcessor::Game));
+    profileBox->addItem("Film", int(SurroundProcessor::Movie));
+    profileBox->addItem("Musique", int(SurroundProcessor::Music));
+    profileBox->setCurrentIndex(3);
+
     surroundSlider = new QSlider(Qt::Horizontal);
     centerSlider = new QSlider(Qt::Horizontal);
     lfeSlider = new QSlider(Qt::Horizontal);
@@ -158,6 +173,10 @@ MainWindow::MainWindow(QWidget *parent)
     auto *surroundLayout = new QHBoxLayout();
     surroundLayout->addWidget(new QLabel("Mode :"));
     surroundLayout->addWidget(modeBox);
+    surroundLayout->addWidget(new QLabel("Matrice :"));
+    surroundLayout->addWidget(matrixBox);
+    surroundLayout->addWidget(new QLabel("Profil :"));
+    surroundLayout->addWidget(profileBox);
     surroundLayout->addSpacing(15);
     surroundLayout->addWidget(new QLabel("Surround :"));
     surroundLayout->addWidget(surroundSlider);
@@ -214,6 +233,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(modeBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyAudioMode(); });
+
+    connect(matrixBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyMatrixMode(); });
+    connect(profileBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyProfile(); });
 
     for (QSlider *slider : {surroundSlider, centerSlider, lfeSlider}) {
         connect(slider, &QSlider::valueChanged,
@@ -302,6 +326,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     refreshAudioDevices();
     applyLevels();
+    applyMatrixMode();
+    applyProfile();
     applyAudioMode();
 }
 
@@ -459,6 +485,24 @@ void MainWindow::selectAudioDevice(int index)
 
     statusLabel->setText(
         "Sortie audio : " + audioDevices.at(index).description());
+}
+
+void MainWindow::applyMatrixMode()
+{
+    const auto mode = static_cast<SurroundProcessor::MatrixMode>(matrixBox->currentData().toInt());
+    surround->processor().setMatrixMode(mode);
+    statusLabel->setText(matrixBox->currentText() + " sélectionné (DSP matriciel)");
+}
+
+void MainWindow::applyProfile()
+{
+    const auto profile = static_cast<SurroundProcessor::Profile>(profileBox->currentData().toInt());
+    surround->processor().setProfile(profile);
+    // Les curseurs reflètent les gains appliqués par le profil.
+    surroundSlider->setValue(qRound(surround->processor().surroundLevel() * 100.0f));
+    centerSlider->setValue(qRound(surround->processor().centerLevel() * 100.0f));
+    lfeSlider->setValue(qRound(surround->processor().lfeLevel() * 100.0f));
+    statusLabel->setText("Profil " + profileBox->currentText());
 }
 
 void MainWindow::applyLevels()
