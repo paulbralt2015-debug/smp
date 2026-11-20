@@ -76,7 +76,7 @@ QImage VideoDisplayWidget::processFrame(const QImage &source) const
                 line[x] = c.rgb();
             }
         }
-        if (simulationMode == 1 || simulationMode == 4) {
+        if (simulationMode == 1 || simulationMode == 4 || receptionMode == 1) {
             QPainter p(&out);
             p.setOpacity(0.10);
             p.drawImage(2, 0, out);
