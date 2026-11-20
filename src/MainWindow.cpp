@@ -310,6 +310,14 @@ MainWindow::MainWindow(QWidget *parent)
             this, [this](bool) { applyAudioEnhancements(); });
     connect(aspectBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyVideoAspect(); });
+    connect(deinterlaceBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyVideoEffects(); });
+    connect(simulationBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyVideoEffects(); });
+    connect(receptionBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyVideoEffects(); });
+    connect(sparkliesBox, &QCheckBox::toggled,
+            this, [this](bool) { applyVideoEffects(); });
 
     connect(audioModeBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyAudioRouting(); });
@@ -413,6 +421,7 @@ MainWindow::MainWindow(QWidget *parent)
     applyLevels();
     applyAudioEnhancements();
     applyVideoAspect();
+    applyVideoEffects();
     applyMatrixMode();
     applyProfile();
     applyAudioMode();
