@@ -6,6 +6,7 @@
 #include <QAudio>
 #include <QAudioBufferOutput>
 #include <QCloseEvent>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QCryptographicHash>
 #include <QDragEnterEvent>
@@ -93,6 +94,18 @@ MainWindow::MainWindow(QWidget *parent)
     volumeSlider->setRange(0, 100);
     volumeSlider->setMaximumWidth(150);
 
+    amplificationSlider = new QSlider(Qt::Horizontal);
+    amplificationSlider->setRange(100, 200);
+    amplificationSlider->setValue(settings.value("amplification", 100).toInt());
+    amplificationSlider->setMaximumWidth(110);
+    voiceNormalizeBox = new QCheckBox("Normaliser les voix / le son");
+    voiceNormalizeBox->setChecked(settings.value("voiceNormalization", false).toBool());
+
+    aspectBox = new QComboBox();
+    aspectBox->addItem("Format original", 0);
+    aspectBox->addItem("Étirer à la fenêtre", 1);
+    aspectBox->setCurrentIndex(settings.value("aspectMode", 0).toInt());
+
     modeBox = new QComboBox();
     modeBox->addItem("Original (sans upmix)");
     modeBox->addItem("Upmix 5.1");
@@ -168,7 +181,16 @@ MainWindow::MainWindow(QWidget *parent)
     audioLayout->addSpacing(15);
     audioLayout->addWidget(new QLabel("Volume :"));
     audioLayout->addWidget(volumeSlider);
+    audioLayout->addSpacing(12);
+    audioLayout->addWidget(new QLabel("Amplification :"));
+    audioLayout->addWidget(amplificationSlider);
+    audioLayout->addWidget(voiceNormalizeBox);
     audioLayout->addStretch();
+
+    auto *videoLayout = new QHBoxLayout();
+    videoLayout->addWidget(new QLabel("Format vidéo :"));
+    videoLayout->addWidget(aspectBox);
+    videoLayout->addStretch();
 
     auto *surroundLayout = new QHBoxLayout();
     surroundLayout->addWidget(new QLabel("Mode :"));
@@ -198,6 +220,7 @@ MainWindow::MainWindow(QWidget *parent)
     panelLayout->addWidget(timeLabel);
     panelLayout->addLayout(controlLayout);
     panelLayout->addLayout(audioLayout);
+    panelLayout->addLayout(videoLayout);
     panelLayout->addLayout(surroundLayout);
     panelLayout->addLayout(trackLayout);
     panelLayout->addWidget(statusLabel);
@@ -230,6 +253,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(volumeSlider, &QSlider::valueChanged,
             this, [this](int) { applyVolume(); });
+    connect(amplificationSlider, &QSlider::valueChanged,
+            this, [this](int) { applyAudioEnhancements(); });
+    connect(voiceNormalizeBox, &QCheckBox::toggled,
+            this, [this](bool) { applyAudioEnhancements(); });
+    connect(aspectBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyVideoAspect(); });
 
     connect(modeBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyAudioMode(); });
@@ -326,6 +355,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     refreshAudioDevices();
     applyLevels();
+    applyAudioEnhancements();
+    applyVideoAspect();
     applyMatrixMode();
     applyProfile();
     applyAudioMode();
@@ -512,6 +543,22 @@ void MainWindow::applyLevels()
     processor.setSurroundLevel(surroundSlider->value() / 100.0f);
     processor.setCenterLevel(centerSlider->value() / 100.0f);
     processor.setLfeLevel(lfeSlider->value() / 100.0f);
+}
+
+void MainWindow::applyAudioEnhancements()
+{
+    const float gain = amplificationSlider->value() / 100.0f;
+    surround->processor().setInputGain(gain);
+    surround->processor().setVoiceNormalization(voiceNormalizeBox->isChecked());
+    statusLabel->setText(QString("Traitement audio : amplification %1 %%, normalisation %2")
+        .arg(amplificationSlider->value())
+        .arg(voiceNormalizeBox->isChecked() ? "activée" : "désactivée"));
+}
+
+void MainWindow::applyVideoAspect()
+{
+    videoWidget->setAspectRatioMode(aspectBox->currentIndex() == 0
+        ? Qt::KeepAspectRatio : Qt::IgnoreAspectRatio);
 }
 
 void MainWindow::applyVolume()
@@ -716,6 +763,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     settings.setValue("geometry", saveGeometry());
     settings.setValue("volume", volumeSlider->value());
+    settings.setValue("amplification", amplificationSlider->value());
+    settings.setValue("voiceNormalization", voiceNormalizeBox->isChecked());
+    settings.setValue("aspectMode", aspectBox->currentIndex());
     settings.setValue("mode", modeBox->currentIndex());
     settings.setValue("surroundLevel", surroundSlider->value());
     settings.setValue("centerLevel", centerSlider->value());
