@@ -59,7 +59,7 @@ private:
     void applyProfile();
     void applyLevels();
     void applyVolume();
-    void applyVideoAspect();
+    void applyVideoAspect();\n    void applyVideoEffects();
     void applyAudioEnhancements();
     void toggleMute();
     void toggleFullscreen();
@@ -74,7 +74,7 @@ private:
     QAudioOutput *audioOutput = nullptr;
     QAudioBufferOutput *bufferOutput = nullptr;
     SurroundOutput *surround = nullptr;
-    QVideoWidget *videoWidget = nullptr;
+    VideoDisplayWidget *videoWidget = nullptr;
     QWidget *controlsPanel = nullptr;
     QTimer *hideControlsTimer = nullptr;
 
@@ -96,7 +96,7 @@ private:
     QComboBox *profileBox = nullptr;
     QComboBox *audioTrackBox = nullptr;
     QComboBox *subtitleBox = nullptr;
-    QComboBox *aspectBox = nullptr;
+    QComboBox *aspectBox = nullptr;\n    QComboBox *deinterlaceBox = nullptr;\n    QComboBox *simulationBox = nullptr;\n    QComboBox *receptionBox = nullptr;\n    QCheckBox *sparkliesBox = nullptr;
     QCheckBox *voiceNormalizeBox = nullptr;
 
     QLabel *statusLabel = nullptr;
