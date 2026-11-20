@@ -109,8 +109,9 @@ void SurroundOutput::rebuildSink()
     // De nombreux pilotes WASAPI refusent le float 32 bits mais acceptent
     // le PCM signé 16/32 bits : ne pas laisser le lecteur muet pour cela.
     const SurroundProcessor::Mode candidates[] = {
-        requestedMode == SurroundProcessor::Surround71 ? SurroundProcessor::Surround71 : SurroundProcessor::Surround51,
-        requestedMode == SurroundProcessor::Stereo ? SurroundProcessor::Stereo : SurroundProcessor::Stereo
+        requestedMode,
+        requestedMode == SurroundProcessor::Surround71 ? SurroundProcessor::Surround51 : SurroundProcessor::Stereo,
+        SurroundProcessor::Stereo
     };
     const QAudioFormat::SampleFormat sampleFormats[] = {
         QAudioFormat::Float, QAudioFormat::Int16, QAudioFormat::Int32
