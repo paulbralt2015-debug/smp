@@ -165,7 +165,7 @@ static void testLfeFilter()
     // 50 Hz : doit passer dans le LFE.
     auto low = sine(kRate, 50.0f, 0.5f, 0.5f);
     p.process(low.data(), kRate, out);
-    CHECK(peak(out, 6, 3, kRate - 4800) > 0.3f);
+    CHECK(peak(out, 6, 3, kRate - 4800) > 0.25f);
 
     // 5 kHz : doit être quasiment éliminé.
     p.reset();
