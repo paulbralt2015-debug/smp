@@ -97,7 +97,13 @@ bool FfmpegAudioDecoder::receiveFrame(std::vector<float> &pcm, int maxFrames)
 {
     const int rc = avcodec_receive_frame(codec, frame);
     if (rc == AVERROR_EOF) { decoderEof = true; return false; }
-    if (rc == AVERROR(EAGAIN)) return false;
+    // Après l'envoi du paquet NULL, EAGAIN signifie que le décodeur
+    // a vidé son tampon : ne pas relire l'EOF en boucle.
+    if (rc == AVERROR(EAGAIN)) {
+        if (draining)
+            decoderEof = true;
+        return false;
+    }
     if (rc < 0) { error = "Décodage audio : " + ffError(rc); return false; }
 
     const int capacity = static_cast<int>(av_rescale_rnd(
