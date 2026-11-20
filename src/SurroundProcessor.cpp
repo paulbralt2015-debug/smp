@@ -134,6 +134,11 @@ void SurroundProcessor::setLfeLevel(float level)
     lfeGain = std::clamp(level, 0.0f, 1.5f);
 }
 
+void SurroundProcessor::setInputGain(float linearGain)
+{
+    inputGain = std::clamp(linearGain, 0.0f, 3.0f);
+}
+
 int SurroundProcessor::outputChannels() const
 {
     return static_cast<int>(currentMode);
@@ -146,6 +151,7 @@ void SurroundProcessor::reset()
     surroundLow.clear();
     delayA.clear();
     delayB.clear();
+    normalizerEnvelope = 0.0f;
 }
 
 void SurroundProcessor::process(
@@ -166,8 +172,22 @@ void SurroundProcessor::process(
     const float frontMix = 0.5f * std::min(centerGain, 1.0f);
 
     for (int i = 0; i < frames; ++i) {
-        const float left = input[i * 2];
-        const float right = input[i * 2 + 1];
+        float left = input[i * 2] * inputGain;
+        float right = input[i * 2 + 1] * inputGain;
+
+        if (voiceNormalization) {
+            // Compresseur doux à contrôle automatique de niveau :
+            // attaque rapide, relâchement lent, cible RMS d'environ -15 dBFS.
+            const float mono = 0.5f * (left + right);
+            const float level = std::fabs(mono);
+            const float coefficient = level > normalizerEnvelope ? 0.015f : 0.00035f;
+            normalizerEnvelope += coefficient * (level - normalizerEnvelope);
+            const float target = 0.178f;
+            const float correction = std::clamp(
+                target / std::max(normalizerEnvelope, 0.025f), 0.5f, 2.5f);
+            left *= correction;
+            right *= correction;
+        }
 
         if (currentMode == Stereo) {
             output[i * 2] = left;
