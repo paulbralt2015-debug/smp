@@ -54,6 +54,8 @@ private:
     void selectAudioDevice(int index);
     void refreshTracks();
     void applyAudioMode();
+    void applyMatrixMode();
+    void applyProfile();
     void applyLevels();
     void applyVolume();
     void toggleMute();
@@ -86,6 +88,8 @@ private:
 
     QComboBox *audioDeviceBox = nullptr;
     QComboBox *modeBox = nullptr;
+    QComboBox *matrixBox = nullptr;
+    QComboBox *profileBox = nullptr;
     QComboBox *audioTrackBox = nullptr;
     QComboBox *subtitleBox = nullptr;
 
