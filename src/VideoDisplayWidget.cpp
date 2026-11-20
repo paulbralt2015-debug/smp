@@ -98,10 +98,23 @@ void VideoDisplayWidget::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.fillRect(rect(), Qt::black);
     if (image.isNull()) return;
-    QSize target = image.size();
-    if (aspectMode == 1) target = size();
-    else if (aspectMode == 2) target.scale(size(), Qt::KeepAspectRatio);
-    else target.scale(size(), Qt::KeepAspectRatio);
+    QSize target;
+    if (aspectMode == 1) {
+        target = size();
+    } else if (aspectMode >= 2 && aspectMode <= 4) {
+        const qreal ratio = aspectMode == 2 ? 4.0 / 3.0
+                           : aspectMode == 3 ? 16.0 / 9.0 : 21.0 / 9.0;
+        int w = width();
+        int h = qRound(w / ratio);
+        if (h > height()) {
+            h = height();
+            w = qRound(h * ratio);
+        }
+        target = QSize(w, h);
+    } else {
+        target = image.size();
+        target.scale(size(), Qt::KeepAspectRatio);
+    }
     const QRect area((width()-target.width())/2, (height()-target.height())/2,
                      target.width(), target.height());
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
