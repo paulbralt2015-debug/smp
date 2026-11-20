@@ -340,6 +340,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(surround, &SurroundOutput::statusMessage,
             statusLabel, &QLabel::setText);
 
+    connect(surround, &SurroundOutput::outputReadyChanged,
+            this, [this](bool) { applyVolume(); });
+
     connect(positionSlider, &QSlider::sliderPressed,
             this, [this]() { sliderPressed = true; });
 
@@ -647,9 +650,9 @@ void MainWindow::applyVolume()
     if (muted)
         linear = 0.0f;
 
-    // Toute la sortie passe par SurroundOutput (stéréo ou upmix).
-    // On coupe la sortie Qt directe pour éviter un doublage du son.
-    audioOutput->setVolume(0.0f);
+    // Tant que le DSP n'a pas reçu de trames valides, conserver la sortie
+    // Qt directe : cela évite un lecteur muet si QAudioBufferOutput échoue.
+    audioOutput->setVolume(surround->isReady() ? 0.0f : linear);
     surround->setVolume(linear);
 }
 
