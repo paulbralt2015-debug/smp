@@ -106,6 +106,19 @@ void SurroundProcessor::setMode(Mode newMode)
     reset();
 }
 
+void SurroundProcessor::setProfile(Profile profile)
+{
+    listeningProfile = profile;
+    switch (profile) {
+    case Night:  setCenterLevel(1.15f); setSurroundLevel(0.45f); setLfeLevel(0.35f); break;
+    case Game:   setCenterLevel(1.0f);  setSurroundLevel(1.20f); setLfeLevel(0.90f); break;
+    case Movie:  setCenterLevel(1.0f);  setSurroundLevel(0.90f); setLfeLevel(0.90f); break;
+    case Music:  setCenterLevel(0.90f); setSurroundLevel(0.65f); setLfeLevel(0.65f); break;
+    case Standard: default:
+        setCenterLevel(1.0f); setSurroundLevel(0.75f); setLfeLevel(0.80f); break;
+    }
+}
+
 void SurroundProcessor::setSurroundLevel(float level)
 {
     surroundGain = std::clamp(level, 0.0f, 1.5f);
@@ -167,7 +180,10 @@ void SurroundProcessor::process(
 
         const float center = mid * centerGain;
         const float lfe = lfeLow2.process(lfeLow1.process(mid)) * lfeGain;
-        const float surroundSignal = surroundLow.process(side * surroundGain);
+        float matrixSignal = side;
+        if (matrixMode == DolbySurround || matrixMode == ProLogic)
+            matrixSignal = (left - right) * 0.25f;
+        const float surroundSignal = surroundLow.process(matrixSignal * surroundGain);
 
         const float frontLeft = left - mid * frontMix;
         const float frontRight = right - mid * frontMix;
@@ -181,9 +197,14 @@ void SurroundProcessor::process(
 
         if (currentMode == Surround51) {
             const float rear = delayA.process(surroundSignal, rearDelay);
-
-            out[4] = softLimit(rear);
-            out[5] = softLimit(-rear);
+            if (matrixMode == DolbySurround || matrixMode == ProLogic) {
+                // Décodage matriciel mono-arrière de type Pro Logic classique.
+                out[4] = softLimit(rear);
+                out[5] = softLimit(rear);
+            } else {
+                out[4] = softLimit(rear);
+                out[5] = softLimit(-rear);
+            }
         }
         else {
             const float sideSignal = delayA.process(surroundSignal, sideDelay);
