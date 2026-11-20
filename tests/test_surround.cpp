@@ -141,6 +141,7 @@ static void testRearIsDelayed()
     std::vector<float> out;
     SurroundProcessor p(kRate);
     p.setMode(SurroundProcessor::Surround51);
+    p.setSurroundDelay(15.0f);
     p.process(in.data(), 4800, out);
 
     int first = -1;
@@ -159,6 +160,7 @@ static void testLfeFilter()
     std::vector<float> out;
     SurroundProcessor p(kRate);
     p.setMode(SurroundProcessor::Surround51);
+    p.setSubwoofer(true);
 
     // 50 Hz : doit passer dans le LFE.
     auto low = sine(kRate, 50.0f, 0.5f, 0.5f);
