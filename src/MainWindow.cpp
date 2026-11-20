@@ -573,10 +573,9 @@ void MainWindow::applyVolume()
     if (muted)
         linear = 0.0f;
 
-    const bool upmix = modeBox->currentIndex() > 0;
-
-    // En upmix, le son passe par SurroundOutput : la sortie normale est muette.
-    audioOutput->setVolume(upmix ? 0.0f : linear);
+    // Toute la sortie passe par SurroundOutput (stéréo ou upmix).
+    // On coupe la sortie Qt directe pour éviter un doublage du son.
+    audioOutput->setVolume(0.0f);
     surround->setVolume(linear);
 }
 
