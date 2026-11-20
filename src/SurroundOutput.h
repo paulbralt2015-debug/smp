@@ -38,6 +38,7 @@ public:
     void setVolume(float linearVolume);
 
     SurroundProcessor::Mode activeMode() const { return currentMode; }
+    bool isReady() const { return sink && io && hasReceivedBuffer; }
     SurroundProcessor &processor() { return proc; }
 
 public slots:
@@ -48,6 +49,7 @@ public slots:
 
 signals:
     void statusMessage(const QString &message);
+    void outputReadyChanged(bool ready);
 
 private:
     static QAudioFormat formatFor(SurroundProcessor::Mode mode);
@@ -69,5 +71,6 @@ private:
     QTimer pumpTimer;
 
     bool active = false;
+    bool hasReceivedBuffer = false;
     float volume = 0.8f;
 };
