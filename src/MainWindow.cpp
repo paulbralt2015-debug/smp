@@ -584,17 +584,19 @@ void MainWindow::applyAudioMode()
 {
     const int index = modeBox->currentIndex();
 
-    if (index == 0) {
-        player->setAudioBufferOutput(nullptr);
-        surround->setActive(false);
-        statusLabel->setText("Sortie audio d'origine");
-    } else {
-        surround->setRequestedMode(index == 1
-            ? SurroundProcessor::Surround51
-            : SurroundProcessor::Surround71);
-        surround->setActive(true);
-        player->setAudioBufferOutput(bufferOutput);
-    }
+    // Même en stéréo, le flux passe par le DSP pour permettre
+    // l'amplification et la normalisation sans activer l'upmix.
+    surround->setRequestedMode(index == 0
+        ? SurroundProcessor::Stereo
+        : index == 1 ? SurroundProcessor::Surround51
+                     : SurroundProcessor::Surround71);
+    surround->setActive(true);
+    player->setAudioBufferOutput(bufferOutput);
+
+    if (index == 0)
+        statusLabel->setText("Sortie stéréo avec traitements audio");
+    else
+        statusLabel->setText(index == 1 ? "Upmix 5.1" : "Upmix 7.1");
 
     applyVolume();
 }
