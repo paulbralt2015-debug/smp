@@ -14,11 +14,9 @@
 class SurroundProcessor
 {
 public:
-    enum Mode {
-        Stereo = 2,
-        Surround51 = 6,
-        Surround71 = 8
-    };
+    enum Mode { Stereo = 2, Surround51 = 6, Surround71 = 8 };
+    enum MatrixMode { DolbySurround = 0, ProLogic = 1, ProLogicII = 2, ProLogicIIx = 3 };
+    enum Profile { Standard = 0, Night = 1, Game = 2, Movie = 3, Music = 4 };
 
     explicit SurroundProcessor(int sampleRate = 48000);
 
@@ -27,6 +25,9 @@ public:
 
     void setMode(Mode mode);
     Mode mode() const { return currentMode; }
+    void setMatrixMode(MatrixMode mode) { matrixMode = mode; reset(); }
+    MatrixMode matrixModeValue() const { return matrixMode; }
+    void setProfile(Profile profile);
 
     void setSurroundLevel(float level);
     void setCenterLevel(float level);
@@ -76,6 +77,8 @@ private:
 
     int sampleRate = 48000;
     Mode currentMode = Surround51;
+    MatrixMode matrixMode = ProLogicII;
+    Profile listeningProfile = Movie;
 
     float surroundGain = 0.75f;
     float centerGain = 1.0f;
