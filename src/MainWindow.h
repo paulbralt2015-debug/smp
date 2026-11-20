@@ -13,6 +13,7 @@
 
 class QAudioBufferOutput;
 class QCloseEvent;
+class QCheckBox;
 class QComboBox;
 class QDragEnterEvent;
 class QDropEvent;
@@ -58,6 +59,8 @@ private:
     void applyProfile();
     void applyLevels();
     void applyVolume();
+    void applyVideoAspect();
+    void applyAudioEnhancements();
     void toggleMute();
     void toggleFullscreen();
     void showControlsTemporarily();
@@ -85,6 +88,7 @@ private:
     QSlider *surroundSlider = nullptr;
     QSlider *centerSlider = nullptr;
     QSlider *lfeSlider = nullptr;
+    QSlider *amplificationSlider = nullptr;
 
     QComboBox *audioDeviceBox = nullptr;
     QComboBox *modeBox = nullptr;
@@ -92,6 +96,8 @@ private:
     QComboBox *profileBox = nullptr;
     QComboBox *audioTrackBox = nullptr;
     QComboBox *subtitleBox = nullptr;
+    QComboBox *aspectBox = nullptr;
+    QCheckBox *voiceNormalizeBox = nullptr;
 
     QLabel *statusLabel = nullptr;
     QLabel *timeLabel = nullptr;
