@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     aspectBox = new QComboBox();
     aspectBox->addItem("Format original", 0);
-    aspectBox->addItem("Étirer à la fenêtre", 1);\n    aspectBox->addItem("Conserver proportions (letterbox)", 2);
+    aspectBox->addItem("Étirer à la fenêtre", 1);\n    aspectBox->addItem("4:3", 2);\n    aspectBox->addItem("16:9", 3);\n    aspectBox->addItem("21:9", 4);
     aspectBox->setCurrentIndex(settings.value("aspectMode", 0).toInt());\n\n    deinterlaceBox = new QComboBox();\n    deinterlaceBox->addItem("Désentrelacement désactivé", 0);\n    deinterlaceBox->addItem("Bob (champ pair)", 1);\n    deinterlaceBox->addItem("Blend (mélange des champs)", 2);\n    deinterlaceBox->setCurrentIndex(settings.value("deinterlaceMode", 0).toInt());\n    simulationBox = new QComboBox();\n    simulationBox->addItem("Image normale", 0);\n    simulationBox->addItem("VHS", 1);\n    simulationBox->addItem("LaserDisc", 2);\n    simulationBox->addItem("DVD", 3);\n    simulationBox->addItem("Betamax", 4);\n    simulationBox->setCurrentIndex(settings.value("simulationMode", 0).toInt());\n    receptionBox = new QComboBox();\n    receptionBox->addItem("Réception propre", 0);\n    receptionBox->addItem("Satellite analogique", 1);\n    receptionBox->addItem("Terrestre analogique", 2);\n    receptionBox->addItem("Satellite numérique", 3);\n    receptionBox->addItem("TNT / terrestre numérique", 4);\n    receptionBox->setCurrentIndex(settings.value("receptionMode", 0).toInt());\n    sparkliesBox = new QCheckBox("Ajouter des sparklies");\n    sparkliesBox->setChecked(settings.value("sparklies", false).toBool());
 
     modeBox = new QComboBox();
