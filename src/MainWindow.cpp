@@ -1,7 +1,8 @@
 #include "MainWindow.h"
 
 #include "ClickSlider.h"
-#include "SurroundOutput.h"\n#include "VideoDisplayWidget.h"
+#include "SurroundOutput.h"
+#include "VideoDisplayWidget.h"
 
 #include <QAudio>
 #include <QAudioBufferOutput>
@@ -103,8 +104,47 @@ MainWindow::MainWindow(QWidget *parent)
 
     aspectBox = new QComboBox();
     aspectBox->addItem("Format original", 0);
-    aspectBox->addItem("Étirer à la fenêtre", 1);\n    aspectBox->addItem("4:3", 2);\n    aspectBox->addItem("16:9", 3);\n    aspectBox->addItem("21:9", 4);
-    aspectBox->setCurrentIndex(settings.value("aspectMode", 0).toInt());\n\n    deinterlaceBox = new QComboBox();\n    deinterlaceBox->addItem("Désentrelacement désactivé", 0);\n    deinterlaceBox->addItem("Bob (champ pair)", 1);\n    deinterlaceBox->addItem("Blend (mélange des champs)", 2);\n    deinterlaceBox->setCurrentIndex(settings.value("deinterlaceMode", 0).toInt());\n    simulationBox = new QComboBox();\n    simulationBox->addItem("Image normale", 0);\n    simulationBox->addItem("VHS", 1);\n    simulationBox->addItem("LaserDisc", 2);\n    simulationBox->addItem("DVD", 3);\n    simulationBox->addItem("Betamax", 4);\n    simulationBox->setCurrentIndex(settings.value("simulationMode", 0).toInt());\n    receptionBox = new QComboBox();\n    receptionBox->addItem("Réception propre", 0);\n    receptionBox->addItem("Satellite analogique", 1);\n    receptionBox->addItem("Terrestre analogique", 2);\n    receptionBox->addItem("Satellite numérique", 3);\n    receptionBox->addItem("TNT / terrestre numérique", 4);\n    receptionBox->setCurrentIndex(settings.value("receptionMode", 0).toInt());\n    sparkliesBox = new QCheckBox("Ajouter des sparklies");\n    sparkliesBox->setChecked(settings.value("sparklies", false).toBool());
+    aspectBox->addItem("Étirer à la fenêtre", 1);
+    aspectBox->addItem("4:3", 2);
+    aspectBox->addItem("16:9", 3);
+    aspectBox->addItem("21:9", 4);
+    aspectBox->setCurrentIndex(settings.value("aspectMode", 0).toInt());
+
+    deinterlaceBox = new QComboBox();
+    deinterlaceBox->addItem("Désentrelacement désactivé", 0);
+    deinterlaceBox->addItem("Bob (champ pair)", 1);
+    deinterlaceBox->addItem("Blend (mélange des champs)", 2);
+    deinterlaceBox->setCurrentIndex(settings.value("deinterlaceMode", 0).toInt());
+    simulationBox = new QComboBox();
+    simulationBox->addItem("Image normale", 0);
+    simulationBox->addItem("VHS", 1);
+    simulationBox->addItem("LaserDisc", 2);
+    simulationBox->addItem("DVD", 3);
+    simulationBox->addItem("Betamax", 4);
+    simulationBox->setCurrentIndex(settings.value("simulationMode", 0).toInt());
+    receptionBox = new QComboBox();
+    receptionBox->addItem("Réception propre", 0);
+    receptionBox->addItem("Satellite analogique", 1);
+    receptionBox->addItem("Terrestre analogique", 2);
+    receptionBox->addItem("Satellite numérique", 3);
+    receptionBox->addItem("TNT / terrestre numérique", 4);
+    receptionBox->setCurrentIndex(settings.value("receptionMode", 0).toInt());
+    sparkliesBox = new QCheckBox("Ajouter des sparklies");
+    sparkliesBox->setChecked(settings.value("sparklies", false).toBool());
+
+    audioModeBox = new QComboBox();
+    audioModeBox->addItem("Audio par défaut", 0);
+    audioModeBox->addItem("Stéréo 2.0", 1);
+    audioModeBox->addItem("Dolby Surround Pro Logic classique", 2);
+    audioModeBox->addItem("Pro Logic II - Movie", 3);
+    audioModeBox->addItem("Pro Logic II - Music", 4);
+    audioModeBox->addItem("Passthrough (bitstream)", 5);
+    audioModeBox->setCurrentIndex(settings.value("audioMode", 0).toInt());
+
+    audioApiBox = new QComboBox();
+    audioApiBox->addItem("WASAPI (Windows / Qt)", 0);
+    audioApiBox->addItem("Sortie audio système", 1);
+    audioApiBox->setCurrentIndex(settings.value("audioApi", 0).toInt());
 
     modeBox = new QComboBox();
     modeBox->addItem("Original (sans upmix)");
@@ -189,11 +229,22 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto *videoLayout = new QHBoxLayout();
     videoLayout->addWidget(new QLabel("Format vidéo :"));
-    videoLayout->addWidget(aspectBox);\n    videoLayout->addWidget(new QLabel("Désentrelacement :"));\n    videoLayout->addWidget(deinterlaceBox);\n    videoLayout->addWidget(new QLabel("Support :"));\n    videoLayout->addWidget(simulationBox);\n    videoLayout->addWidget(new QLabel("Réception :"));\n    videoLayout->addWidget(receptionBox);\n    videoLayout->addWidget(sparkliesBox);
+    videoLayout->addWidget(aspectBox);
+    videoLayout->addWidget(new QLabel("Désentrelacement :"));
+    videoLayout->addWidget(deinterlaceBox);
+    videoLayout->addWidget(new QLabel("Support :"));
+    videoLayout->addWidget(simulationBox);
+    videoLayout->addWidget(new QLabel("Réception :"));
+    videoLayout->addWidget(receptionBox);
+    videoLayout->addWidget(sparkliesBox);
     videoLayout->addStretch();
 
     auto *surroundLayout = new QHBoxLayout();
-    surroundLayout->addWidget(new QLabel("Mode :"));
+    surroundLayout->addWidget(new QLabel("Mode audio :"));
+    surroundLayout->addWidget(audioModeBox);
+    surroundLayout->addWidget(new QLabel("API :"));
+    surroundLayout->addWidget(audioApiBox);
+    surroundLayout->addWidget(new QLabel("Canaux :"));
     surroundLayout->addWidget(modeBox);
     surroundLayout->addWidget(new QLabel("Matrice :"));
     surroundLayout->addWidget(matrixBox);
@@ -259,6 +310,11 @@ MainWindow::MainWindow(QWidget *parent)
             this, [this](bool) { applyAudioEnhancements(); });
     connect(aspectBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyVideoAspect(); });
+
+    connect(audioModeBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyAudioRouting(); });
+    connect(audioApiBox, &QComboBox::currentIndexChanged,
+            this, [this](int) { applyAudioRouting(); });
 
     connect(modeBox, &QComboBox::currentIndexChanged,
             this, [this](int) { applyAudioMode(); });
@@ -360,6 +416,7 @@ MainWindow::MainWindow(QWidget *parent)
     applyMatrixMode();
     applyProfile();
     applyAudioMode();
+    applyAudioRouting();
 }
 
 // ---------------------------------------------------------------------------
@@ -557,11 +614,19 @@ void MainWindow::applyAudioEnhancements()
 
 void MainWindow::applyVideoAspect()
 {
-    videoWidget->setAspectRatioMode(aspectBox->currentIndex() == 0
-        ? Qt::KeepAspectRatio : Qt::IgnoreAspectRatio);
+    videoWidget->setAspectMode(aspectBox->currentIndex());
 }
 
-void MainWindow::applyVideoEffects()\n{\n    videoWidget->setDeinterlaceMode(deinterlaceBox->currentIndex());\n    videoWidget->setSimulationMode(simulationBox->currentIndex());\n    videoWidget->setReceptionMode(receptionBox->currentIndex());\n    videoWidget->setSparklies(sparkliesBox->isChecked());\n    statusLabel->setText("Effets vidéo appliqués");\n}\n\nvoid MainWindow::applyVolume()
+void MainWindow::applyVideoEffects()
+{
+    videoWidget->setDeinterlaceMode(deinterlaceBox->currentIndex());
+    videoWidget->setSimulationMode(simulationBox->currentIndex());
+    videoWidget->setReceptionMode(receptionBox->currentIndex());
+    videoWidget->setSparklies(sparkliesBox->isChecked());
+    statusLabel->setText("Effets vidéo appliqués");
+}
+
+void MainWindow::applyVolume()
 {
     // Le curseur est en échelle logarithmique (perception de l'oreille) ;
     // Qt attend un volume linéaire.
@@ -577,6 +642,41 @@ void MainWindow::applyVideoEffects()\n{\n    videoWidget->setDeinterlaceMode(dei
     // On coupe la sortie Qt directe pour éviter un doublage du son.
     audioOutput->setVolume(0.0f);
     surround->setVolume(linear);
+}
+
+void MainWindow::applyAudioRouting()
+{
+    const int selected = audioModeBox->currentData().toInt();
+    if (selected == 5) {
+        audioModeBox->blockSignals(true);
+        audioModeBox->setCurrentIndex(0);
+        audioModeBox->blockSignals(false);
+        statusLabel->setText("Passthrough non disponible : Qt fournit ici du PCM décodé. Un chemin bitstream WASAPI dédié est nécessaire.");
+        return;
+    }
+
+    if (selected == 2) {
+        matrixBox->setCurrentIndex(int(SurroundProcessor::DolbySurround));
+        profileBox->setCurrentIndex(int(SurroundProcessor::Standard));
+        modeBox->setCurrentIndex(1);
+    } else if (selected == 3) {
+        matrixBox->setCurrentIndex(int(SurroundProcessor::ProLogicII));
+        profileBox->setCurrentIndex(int(SurroundProcessor::Movie));
+        modeBox->setCurrentIndex(1);
+    } else if (selected == 4) {
+        matrixBox->setCurrentIndex(int(SurroundProcessor::ProLogicII));
+        profileBox->setCurrentIndex(int(SurroundProcessor::Music));
+        modeBox->setCurrentIndex(1);
+    } else {
+        modeBox->setCurrentIndex(0);
+    }
+
+    applyAudioMode();
+    applyMatrixMode();
+    applyProfile();
+    statusLabel->setText(audioApiBox->currentIndex() == 0
+        ? "WASAPI via le backend Windows de Qt (mode partagé)"
+        : "Backend audio système Qt");
 }
 
 void MainWindow::applyAudioMode()
@@ -766,8 +866,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("volume", volumeSlider->value());
     settings.setValue("amplification", amplificationSlider->value());
     settings.setValue("voiceNormalization", voiceNormalizeBox->isChecked());
-    settings.setValue("aspectMode", aspectBox->currentIndex());\n    settings.setValue("deinterlaceMode", deinterlaceBox->currentIndex());\n    settings.setValue("simulationMode", simulationBox->currentIndex());\n    settings.setValue("receptionMode", receptionBox->currentIndex());\n    settings.setValue("sparklies", sparkliesBox->isChecked());
+    settings.setValue("aspectMode", aspectBox->currentIndex());
+    settings.setValue("deinterlaceMode", deinterlaceBox->currentIndex());
+    settings.setValue("simulationMode", simulationBox->currentIndex());
+    settings.setValue("receptionMode", receptionBox->currentIndex());
+    settings.setValue("sparklies", sparkliesBox->isChecked());
     settings.setValue("mode", modeBox->currentIndex());
+    settings.setValue("audioMode", audioModeBox->currentIndex());
+    settings.setValue("audioApi", audioApiBox->currentIndex());
     settings.setValue("surroundLevel", surroundSlider->value());
     settings.setValue("centerLevel", centerSlider->value());
     settings.setValue("lfeLevel", lfeSlider->value());
