@@ -6,6 +6,7 @@
 #include <QMediaDevices>
 
 #include <algorithm>
+#include <cmath>
 
 SurroundOutput::SurroundOutput(QObject *parent)
     : QObject(parent)
@@ -104,20 +105,32 @@ void SurroundOutput::rebuildSink()
     if (!active)
         return;
 
-    // On essaie le mode demandé, puis on descend : 7.1 -> 5.1 -> stéréo.
+    // Essaie les configurations de canaux et plusieurs formats PCM.
+    // De nombreux pilotes WASAPI refusent le float 32 bits mais acceptent
+    // le PCM signé 16/32 bits : ne pas laisser le lecteur muet pour cela.
     const SurroundProcessor::Mode candidates[] = {
-        SurroundProcessor::Surround71,
-        SurroundProcessor::Surround51,
-        SurroundProcessor::Stereo
+        requestedMode == SurroundProcessor::Surround71 ? SurroundProcessor::Surround71 : SurroundProcessor::Surround51,
+        requestedMode == SurroundProcessor::Stereo ? SurroundProcessor::Stereo : SurroundProcessor::Stereo
+    };
+    const QAudioFormat::SampleFormat sampleFormats[] = {
+        QAudioFormat::Float, QAudioFormat::Int16, QAudioFormat::Int32
     };
 
     for (const auto mode : candidates) {
         if (mode > requestedMode)
             continue;
-
-        const QAudioFormat format = formatFor(mode);
-
-        if (device.isNull() || !device.isFormatSupported(format))
+        QAudioFormat format = formatFor(mode);
+        bool supported = false;
+        if (!device.isNull()) {
+            for (const auto sampleFormat : sampleFormats) {
+                format.setSampleFormat(sampleFormat);
+                if (device.isFormatSupported(format)) {
+                    supported = true;
+                    break;
+                }
+            }
+        }
+        if (!supported)
             continue;
 
         sink = new QAudioSink(device, format, this);
@@ -170,8 +183,29 @@ void SurroundOutput::handleBuffer(const QAudioBuffer &buffer)
     if (scratch.empty())
         return;
 
-    pending.append(reinterpret_cast<const char *>(scratch.data()),
-                   static_cast<qsizetype>(scratch.size() * sizeof(float)));
+    if (outputFormat.sampleFormat() == QAudioFormat::Float) {
+        pending.append(reinterpret_cast<const char *>(scratch.data()),
+                       static_cast<qsizetype>(scratch.size() * sizeof(float)));
+    } else if (outputFormat.sampleFormat() == QAudioFormat::Int16) {
+        std::vector<qint16> pcm(scratch.size());
+        for (std::size_t i = 0; i < scratch.size(); ++i) {
+            const float v = std::clamp(scratch[i], -1.0f, 1.0f);
+            pcm[i] = static_cast<qint16>(std::lrint(v * 32767.0f));
+        }
+        pending.append(reinterpret_cast<const char *>(pcm.data()),
+                       static_cast<qsizetype>(pcm.size() * sizeof(qint16)));
+    } else if (outputFormat.sampleFormat() == QAudioFormat::Int32) {
+        std::vector<qint32> pcm(scratch.size());
+        for (std::size_t i = 0; i < scratch.size(); ++i) {
+            const double v = std::clamp(static_cast<double>(scratch[i]), -1.0, 1.0);
+            pcm[i] = static_cast<qint32>(std::llround(v * 2147483647.0));
+        }
+        pending.append(reinterpret_cast<const char *>(pcm.data()),
+                       static_cast<qsizetype>(pcm.size() * sizeof(qint32)));
+    } else {
+        emit statusMessage("Format PCM de sortie non pris en charge");
+        return;
+    }
 
     // Garde-fou : jamais plus d'1 seconde en attente.
     const qint64 frameBytes = outputFormat.bytesPerFrame();
