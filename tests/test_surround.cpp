@@ -172,6 +172,23 @@ static void testLfeFilter()
     CHECK(peak(out, 6, 3, kRate - 4800) < 0.01f);
 }
 
+
+static void testStereoRearIsDecorrelated()
+{
+    const auto in = sine(9600, 733.0f, 0.45f, -0.45f);
+    std::vector<float> out;
+    SurroundProcessor p(kRate);
+    p.setMode(SurroundProcessor::Surround51);
+    p.setMatrixMode(SurroundProcessor::ProLogicII);
+    p.process(in.data(), 9600, out);
+
+    float difference = 0.0f;
+    for (int i = 1200; i < 9600; ++i)
+        difference = std::max(difference,
+            std::fabs(out[i * 6 + 4] - out[i * 6 + 5]));
+    CHECK(difference > 0.01f);
+}
+
 static void testNoClipping()
 {
     // Signal plein échelle : aucune sortie ne doit atteindre ±1.
@@ -206,6 +223,7 @@ int main()
     testCenterOnlyHasNoRear();
     testSideSignalGoesToRear();
     testRearIsDelayed();
+    testStereoRearIsDecorrelated();
     testLfeFilter();
     testNoClipping();
 
