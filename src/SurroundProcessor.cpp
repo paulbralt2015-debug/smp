@@ -151,6 +151,9 @@ void SurroundProcessor::reset()
     surroundLow.clear();
     delayA.clear();
     delayB.clear();
+    surroundAllPassA.clear();
+    surroundAllPassB.clear();
+    midEnvelope = sideEnvelope = 0.0f;
     normalizerEnvelope = 0.0f;
 }
 
@@ -198,15 +201,29 @@ void SurroundProcessor::process(
         const float mid = (left + right) * 0.5f;
         const float side = (left - right) * 0.5f;
 
-        const float center = mid * centerGain;
+        // Pilotage adaptatif de la matrice : les enveloppes mid/side
+        // stabilisent le placement du centre et des informations latérales.
+        const float envCoefficient = 0.0025f;
+        midEnvelope += envCoefficient * (std::fabs(mid) - midEnvelope);
+        sideEnvelope += envCoefficient * (std::fabs(side) - sideEnvelope);
+        const float totalEnvelope = midEnvelope + sideEnvelope + 1.0e-5f;
+        const float centerSteering = std::clamp(
+            (midEnvelope - sideEnvelope * 0.35f) / totalEnvelope, 0.0f, 1.0f);
+        const float surroundSteering = std::clamp(
+            (sideEnvelope - midEnvelope * 0.25f) / totalEnvelope, 0.0f, 1.0f);
+
+        const float center = mid * centerGain * (0.85f + 0.15f * centerSteering);
         const float lfe = lfeLow2.process(lfeLow1.process(mid)) * lfeGain;
         float matrixSignal = side;
         if (matrixMode == DolbySurround || matrixMode == ProLogic)
-            matrixSignal = (left - right) * 0.25f;
-        const float surroundSignal = surroundLow.process(matrixSignal * surroundGain);
+            matrixSignal = side * 0.5f;
+        const float steeredSurround = matrixSignal * surroundGain
+                                    * (0.75f + 0.5f * surroundSteering);
+        const float surroundSignal = surroundLow.process(steeredSurround);
 
-        const float frontLeft = left - mid * frontMix;
-        const float frontRight = right - mid * frontMix;
+        const float effectiveFrontMix = frontMix * centerSteering;
+        const float frontLeft = left - mid * effectiveFrontMix;
+        const float frontRight = right - mid * effectiveFrontMix;
 
         float *out = &output[static_cast<std::size_t>(i) * channels];
 
@@ -216,24 +233,27 @@ void SurroundProcessor::process(
         out[3] = softLimit(lfe);
 
         if (currentMode == Surround51) {
-            const float rear = delayA.process(surroundSignal, rearDelay);
-            if (matrixMode == DolbySurround || matrixMode == ProLogic) {
-                // Décodage matriciel mono-arrière de type Pro Logic classique.
-                out[4] = softLimit(rear);
-                out[5] = softLimit(rear);
-            } else {
-                out[4] = softLimit(rear);
-                out[5] = softLimit(-rear);
-            }
+            // Deux réseaux all-pass créent une différence de phase douce
+            // entre les enceintes arrière sans dupliquer un canal inversé.
+            const float rearLeft = delayA.process(
+                surroundAllPassA.process(surroundSignal), rearDelay);
+            const float rearRight = delayB.process(
+                surroundAllPassB.process(surroundSignal), rearDelay + sideDelay / 3);
+            out[4] = softLimit(rearLeft);
+            out[5] = softLimit(rearRight);
         }
         else {
-            const float sideSignal = delayA.process(surroundSignal, sideDelay);
-            const float backSignal = delayB.process(surroundSignal, backDelay);
+            const float decorrelatedA = surroundAllPassA.process(surroundSignal);
+            const float decorrelatedB = surroundAllPassB.process(surroundSignal);
+            const float sideLeft = delayA.process(decorrelatedA, sideDelay);
+            const float sideRight = delayB.process(decorrelatedB, sideDelay + 96);
+            const float backLeft = delayA.process(decorrelatedB, backDelay);
+            const float backRight = delayB.process(decorrelatedA, backDelay + 96);
 
-            out[4] = softLimit(backSignal * 0.5f);
-            out[5] = softLimit(-backSignal * 0.5f);
-            out[6] = softLimit(sideSignal * 0.7f);
-            out[7] = softLimit(-sideSignal * 0.7f);
+            out[4] = softLimit(backLeft * 0.45f);
+            out[5] = softLimit(backRight * 0.45f);
+            out[6] = softLimit(sideLeft * 0.70f);
+            out[7] = softLimit(sideRight * 0.70f);
         }
     }
 }
