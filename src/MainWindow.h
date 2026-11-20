@@ -23,6 +23,7 @@ class QLabel;
 class QPushButton;
 class QSlider;
 class QVideoWidget;
+class VideoDisplayWidget;
 class QWidget;
 class SurroundOutput;
 
@@ -55,11 +56,13 @@ private:
     void selectAudioDevice(int index);
     void refreshTracks();
     void applyAudioMode();
+    void applyAudioRouting();
     void applyMatrixMode();
     void applyProfile();
     void applyLevels();
     void applyVolume();
-    void applyVideoAspect();\n    void applyVideoEffects();
+    void applyVideoAspect();
+    void applyVideoEffects();
     void applyAudioEnhancements();
     void toggleMute();
     void toggleFullscreen();
@@ -92,11 +95,17 @@ private:
 
     QComboBox *audioDeviceBox = nullptr;
     QComboBox *modeBox = nullptr;
+    QComboBox *audioModeBox = nullptr;
+    QComboBox *audioApiBox = nullptr;
     QComboBox *matrixBox = nullptr;
     QComboBox *profileBox = nullptr;
     QComboBox *audioTrackBox = nullptr;
     QComboBox *subtitleBox = nullptr;
-    QComboBox *aspectBox = nullptr;\n    QComboBox *deinterlaceBox = nullptr;\n    QComboBox *simulationBox = nullptr;\n    QComboBox *receptionBox = nullptr;\n    QCheckBox *sparkliesBox = nullptr;
+    QComboBox *aspectBox = nullptr;
+    QComboBox *deinterlaceBox = nullptr;
+    QComboBox *simulationBox = nullptr;
+    QComboBox *receptionBox = nullptr;
+    QCheckBox *sparkliesBox = nullptr;
     QCheckBox *voiceNormalizeBox = nullptr;
 
     QLabel *statusLabel = nullptr;
